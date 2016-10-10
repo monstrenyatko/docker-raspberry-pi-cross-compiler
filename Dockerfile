@@ -17,11 +17,8 @@ RUN apt-get update \
 
 # Here is where we hardcode the toolchain decision.
 ENV HOST=arm-linux-gnueabihf \
-    TOOLCHAIN=gcc-linaro-arm-linux-gnueabihf-raspbian-x64 \
+    TOOLCHAIN=arm-rpi-4.9.3-linux-gnueabihf \
     RPXC_ROOT=/rpxc
-
-#    TOOLCHAIN=arm-rpi-4.9.3-linux-gnueabihf \
-#    TOOLCHAIN=gcc-linaro-arm-linux-gnueabihf-raspbian-x64 \
 
 WORKDIR $RPXC_ROOT
 RUN curl -L https://github.com/raspberrypi/tools/tarball/master \
@@ -48,9 +45,11 @@ RUN curl -Ls https://github.com/sdhibit/docker-rpi-raspbian/raw/master/raspbian.
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 libc6-dev \
                 symlinks \
+                libboost1.55-all-dev \
         && symlinks -cors /'
 
 COPY image/ /
 
 WORKDIR /build
 ENTRYPOINT [ "/rpxc/entrypoint.sh" ]
+

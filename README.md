@@ -1,10 +1,12 @@
 # Raspberry Pi Cross-Compiler in a Docker Container
 
-An easy-to-use  all-in-one cross compiler for the Raspberry Pi.
+An easy-to-use all-in-one cross compiler for the Raspberry Pi.
 
-This project is available as [sdthirlwall/raspberry-pi-cross-compiler](https://registry.hub.docker.com/u/sdthirlwall/raspberry-pi-cross-compiler/) on [Docker Hub](https://hub.docker.com/), and as [sdt/docker-raspberry-pi-cross-compiler](https://github.com/sdt/docker-raspberry-pi-cross-compiler) on [GitHub](https://github.com).
+#### Upstream Links
 
-Please raise any issues on the [GitHub issue tracker](https://github.com/sdt/docker-raspberry-pi-cross-compiler/issues) as I don't get notified about Docker Hub comments.
+* Docker Registry @[monstrenyatko/docker-rpi-cross-compiler](https://hub.docker.com/r/monstrenyatko/docker-rpi-cross-compiler/)
+* GitHub @[monstrenyatko/docker-rpi-cross-compiler](https://github.com/monstrenyatko/docker-rpi-cross-compiler)
+* Fork of GitHub @[sdt/docker-raspberry-pi-cross-compiler](https://github.com/sdt/docker-raspberry-pi-cross-compiler)
 
 ## Contents
 
@@ -17,10 +19,11 @@ Please raise any issues on the [GitHub issue tracker](https://github.com/sdt/doc
 
 ## Features
 
-* The [gcc-linaro-arm-linux-gnueabihf-raspbian-x64 toolchain](https://github.com/raspberrypi/tools/tree/master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64) from [raspberrypi/tools](https://github.com/raspberrypi/tools)
-* Raspbian sysroot from [sdhibit/docker-rpi-raspbian](https://github.com/sdhibit/docker-rpi-raspbian) :new:
-* Easy installation of raspbian packages into the sysroot using the [customised qemu arm emulator](https://resin.io/blog/building-arm-containers-on-any-x86-machine-even-dockerhub/) from [resin-io-projects/armv7hf-debian-qemu](https://github.com/resin-io-projects/armv7hf-debian-qemu) :new:
-* Easy-to-use front end wrapper program `rpxc`.
+* Toolchain: [arm-rpi-4.9.3-linux-gnueabihf](https://github.com/raspberrypi/tools/tree/master/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf)
+* Raspbian sysroot: [2015.05.05](https://github.com/sdhibit/docker-rpi-raspbian)
+* Easy installation of Raspbian packages into the sysroot using the [qemu arm emulator](https://github.com/resin-io-projects/armv7hf-debian-qemu)
+* Easy-to-use front end wrapper program `rpxc`
+* [Boost](http://www.boost.org) 1.55 C++ libraries
 
 ## Installation
 
@@ -30,7 +33,7 @@ To install the helper script, run the image with no arguments, and redirect the 
 
 eg.
 ```
-docker run sdthirlwall/raspberry-pi-cross-compiler > ~/bin/rpxc
+docker run monstrenyatko/docker-rpi-cross-compiler > ~/bin/rpxc
 chmod +x ~/bin/rpxc
 ```
 
@@ -40,7 +43,7 @@ chmod +x ~/bin/rpxc
 
 Execute the given command-line inside the container.
 
-If the command matches one of the rpxc built-in commands (see below), that will be executed locally, otherwise the command is executed inside the container.
+If the command matches one of the `rpxc` built-in commands (see below), that will be executed locally, otherwise the command is executed inside the container.
 
 `rpxc -- [command] [args...]`
 
@@ -52,13 +55,13 @@ To force a command to run inside the container (in case of a name clash with a b
 
 `rpxc install-debian [--update] package packages...`
 
-Install native packages into the docker image. Changes are committed back to the sdthirlwall/raspberry-pi-cross-compiler image.
+Install native packages into the docker image. Changes are committed back to the image.
 
 #### install-raspbian
 
 `rpxc install-raspbian [--update] package packages...`
 
-Install raspbian packages from the raspbian repositories into the sysroot of thedocker image. Changes are committed back to the sdthirlwall/raspberry-pi-cross-compiler image.
+Install Raspbian packages from the Raspbian repositories into the sysroot of the docker image. Changes are committed back to the image.
 
 #### update-image
 
@@ -66,19 +69,19 @@ Install raspbian packages from the raspbian repositories into the sysroot of the
 
 Pull the latest version of the docker image.
 
-If a new docker image is available, any extra packages installed with `install-debian` or `install-raspbian` _will be lost_.
+If a new docker image is available, any extra packages installed with `install-debian` or `install-raspbian` will be lost.
 
 #### update-script
 
 `rpxc update-script`
 
-Update the installed rpxc script with the one bundled in the image.
+Update the installed `rpxc` script with the one bundled in the image.
 
 #### update
 
 `rpxc update`
 
-Update both the docker image and the rpxc script.
+Update both the docker image and the `rpxc` script.
 
 ## Configuration
 
@@ -94,7 +97,7 @@ Default: `~/.rpxc`
 
 The docker image to run.
 
-Default: sdthirlwall/raspberry-pi-cross-compiler
+Default: monstrenyatko/docker-rpi-cross-compiler
 
 ### RPXC_ARGS / --args &lt;docker-run-args&gt;
 
@@ -102,12 +105,14 @@ Extra arguments to pass to the `docker run` command.
 
 ## Custom Images
 
-Using `rpxc install-debian` and `rpxc install-raspbian` are really only intended for getting a build environment together. Once you've figured out which debian and raspbian packages you need, it's better to create a custom downstream image that has all your tools and development packages built in.
+Using `rpxc install-debian` and `rpxc install-raspbian` are really only intended for getting a build environment together.
+Once you've figured out which Debian and Raspbian packages you need, it's better to create a custom downstream image
+that has all your tools and development packages built in.
 
 ### Create a Dockerfile
 
 ```Dockerfile
-FROM sdthirlwall/raspberry-pi-cross-compiler
+FROM monstrenyatko/docker-rpi-cross-compiler
 
 # Install some native build-time tools
 RUN install-debian scons
@@ -141,8 +146,5 @@ CFLAGS=--sysroot=$SYSROOT ./configure --host=$HOST
 make
 ```
 
-And call it as `rpxc ./mymake.sh`
+And call it as `rpxc -- ./mymake.sh`
 
-## Examples
-
-See the [examples directory](example/) for some real examples.
