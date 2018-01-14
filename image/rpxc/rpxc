@@ -169,7 +169,7 @@ FINAL_CONFIG=${ARG_CONFIG-${RPXC_CONFIG-$DEFAULT_CONFIG}}
 [[ -f "$FINAL_CONFIG" ]] && source "$FINAL_CONFIG"
 
 # Set the docker image
-DEFAULT_IMAGE=sdthirlwall/raspberry-pi-cross-compiler
+DEFAULT_IMAGE=monstrenyatko/rpi-cross-compiler
 FINAL_IMAGE=${ARG_IMAGE-${RPXC_IMAGE-$DEFAULT_IMAGE}}
 
 # Set the docker run extra args (if any)
@@ -221,7 +221,7 @@ docker run -i -t --rm \
 #
 #   To install the rpxc helper, run the following commands:
 #
-#       docker run sdthirlwall/raspberry-pi-cross-compiler > rpxc
+#       docker run monstrenyatko/rpi-cross-compiler > rpxc
 #       chmod +x rpxc
 #
 #   You may then wish to move rpxc to somewhere in your path.
