@@ -1,5 +1,7 @@
 # Raspberry Pi Cross-Compiler in a Docker Container
 
+[![Build Status](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler.svg?branch=master)](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler)
+
 An easy-to-use all-in-one cross compiler for the Raspberry Pi.
 
 #### Upstream Links
