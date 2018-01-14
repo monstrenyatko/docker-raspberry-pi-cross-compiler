@@ -4,7 +4,7 @@ An easy-to-use all-in-one cross compiler for the Raspberry Pi.
 
 #### Upstream Links
 
-* Docker Registry @[monstrenyatko/docker-rpi-cross-compiler](https://hub.docker.com/r/monstrenyatko/docker-rpi-cross-compiler/)
+* Docker Registry @[monstrenyatko/rpi-cross-compiler](https://hub.docker.com/r/monstrenyatko/rpi-cross-compiler/)
 * GitHub @[monstrenyatko/docker-rpi-cross-compiler](https://github.com/monstrenyatko/docker-rpi-cross-compiler)
 * Fork of GitHub @[sdt/docker-raspberry-pi-cross-compiler](https://github.com/sdt/docker-raspberry-pi-cross-compiler)
 
@@ -24,6 +24,8 @@ An easy-to-use all-in-one cross compiler for the Raspberry Pi.
 * Easy installation of Raspbian packages into the sysroot using the [qemu arm emulator](https://github.com/resin-io-projects/armv7hf-debian-qemu)
 * Easy-to-use front end wrapper program `rpxc`
 * [Boost](http://www.boost.org) 1.55 C++ libraries
+* `libssl-dev`. See [OpenSSL](https://www.openssl.org/)
+* `libjansson-dev`. See [Jansson](https://github.com/akheron/jansson)
 
 ## Installation
 
@@ -33,7 +35,7 @@ To install the helper script, run the image with no arguments, and redirect the 
 
 eg.
 ```
-docker run monstrenyatko/docker-rpi-cross-compiler > ~/bin/rpxc
+docker run monstrenyatko/rpi-cross-compiler > ~/bin/rpxc
 chmod +x ~/bin/rpxc
 ```
 
@@ -97,7 +99,7 @@ Default: `~/.rpxc`
 
 The docker image to run.
 
-Default: monstrenyatko/docker-rpi-cross-compiler
+Default: monstrenyatko/rpi-cross-compiler
 
 ### RPXC_ARGS / --args &lt;docker-run-args&gt;
 
@@ -112,7 +114,7 @@ that has all your tools and development packages built in.
 ### Create a Dockerfile
 
 ```Dockerfile
-FROM monstrenyatko/docker-rpi-cross-compiler
+FROM monstrenyatko/rpi-cross-compiler
 
 # Install some native build-time tools
 RUN install-debian scons
