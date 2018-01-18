@@ -1,154 +1,145 @@
-# Raspberry Pi Cross-Compiler in a Docker Container
+Raspberry Pi Compiler in a Docker Container
+===========================================
 
-[![Build Status](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler.svg?branch=master)](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler)
+[![Build Status](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler.svg?branch=no_rpxc)](https://travis-ci.org/monstrenyatko/docker-rpi-cross-compiler)
 
-An easy-to-use all-in-one cross compiler for the Raspberry Pi.
 
-#### Upstream Links
+About
+=====
 
+An easy-to-use all-in-one compiler for the Raspberry Pi.
+See [Docker](https://www.docker.com).
+
+Upstream Links
+--------------
 * Docker Registry @[monstrenyatko/rpi-cross-compiler](https://hub.docker.com/r/monstrenyatko/rpi-cross-compiler/)
-* GitHub @[monstrenyatko/docker-rpi-cross-compiler](https://github.com/monstrenyatko/docker-rpi-cross-compiler)
-* Fork of GitHub @[sdt/docker-raspberry-pi-cross-compiler](https://github.com/sdt/docker-raspberry-pi-cross-compiler)
+* GitHub @[monstrenyatko/docker-rpi-cross-compiler](https://github.com/monstrenyatko/docker-rpi-cross-compiler/tree/no_rpxc/)
 
-## Contents
-
-* [Features](#features)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Configuration](#configuration)
-* [Custom Images](#custom-images)
-* [Examples](#examples)
-
-## Features
-
-* Toolchain: [arm-rpi-4.9.3-linux-gnueabihf](https://github.com/raspberrypi/tools/tree/master/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf)
-* Raspbian sysroot: [2015.05.05](https://github.com/sdhibit/docker-rpi-raspbian)
-* Easy installation of Raspbian packages into the sysroot using the [qemu arm emulator](https://github.com/resin-io-projects/armv7hf-debian-qemu)
-* Easy-to-use front end wrapper program `rpxc`
+Features
+--------
+* Image based on [raspbian/jessie](https://hub.docker.com/r/raspbian/jessie/)
+* Built-in `qemu-arm-static` allows running the image on `x86` platform (**Note:** performance might be not good).
+* [CMake](https://cmake.org/)
 * [Boost](http://www.boost.org) 1.55 C++ libraries
 * `libssl-dev`. See [OpenSSL](https://www.openssl.org/)
 * `libjansson-dev`. See [Jansson](https://github.com/akheron/jansson)
 
-## Installation
+Usage
+=====
 
-This image is not intended to be run manually. Instead, there is a helper script which comes bundled with the image.
+1. Prepare the `run.sh` script to be executed into the container, this script performs the actual build:
 
-To install the helper script, run the image with no arguments, and redirect the output to a file.
+    ```sh
+        #!/bin/bash
 
-eg.
-```
-docker run monstrenyatko/rpi-cross-compiler > ~/bin/rpxc
-chmod +x ~/bin/rpxc
-```
+        exiterr() { echo "Error: ${1}" >&2; exit 1; }
 
-## Usage
+        set -e
+        set -x
 
-`rpxc [command] [args...]`
+        if [ ! -f /.dockerenv ]; then
+          exiterr "This script ONLY runs in a Docker container."
+        fi
 
-Execute the given command-line inside the container.
+        # Your compilation commands
+        # Ex:
+        # cmake -D CMAKE_BUILD_TYPE=Release \
+        #    /source
+        # make
+    ```
+2. Prepare the  `build.sh` script for easy execution:
 
-If the command matches one of the `rpxc` built-in commands (see below), that will be executed locally, otherwise the command is executed inside the container.
+    ```sh
+        #!/bin/bash
 
-`rpxc -- [command] [args...]`
+        set -e
+        set -x
 
-To force a command to run inside the container (in case of a name clash with a built-in command), use `--` before the command.
+        exiterr() { echo "Error: ${1}" >&2; exit 1; }
 
-### Built-in commands
+        function abs_path {
+            if [[ -d "$1" ]]
+            then
+                pushd "$1" >/dev/null
+                pwd
+                popd >/dev/null
+            elif [[ -e $1 ]]
+            then
+                pushd "$(dirname "$1")" >/dev/null
+                echo "$(pwd)/$(basename "$1")"
+                popd >/dev/null
+            else
+                echo "$1" does not exist! >&2
+                return 1
+            fi
+        }
 
-#### install-debian
+        SRC_PATH=$(abs_path $1)
+        if [ -z "$SRC_PATH" ]; then
+            exiterr "$1 does not exist!"
+        fi
 
-`rpxc install-debian [--update] package packages...`
+        # Select the Docker image
+        export DOCKER_IMAGE=monstrenyatko/rpi-cross-compiler:no_rpxc
 
-Install native packages into the docker image. Changes are committed back to the image.
+        # If we are not running via boot2docker provide the current user UID and GID
+        if [ -z $DOCKER_HOST ]; then
+            BUILD_USER_IDS_ENV="-e BUILD_USER_UID=$( id -u ) -e BUILD_USER_GID=$( id -g )"
+        fi
 
-#### install-raspbian
+        # Execute build
+        docker run --rm -it \
+            $BUILD_USER_IDS_ENV \
+            -v $PWD:/build \
+            -v $SRC_PATH:/source \
+            -w="/build" \
+            $DOCKER_IMAGE /source/run.sh
+    ```
+3. Place both scripts to the `project sources root directory`
+4. Start the out-of-source build:
 
-`rpxc install-raspbian [--update] package packages...`
+    * create `build` directory and navigate to this directory:
 
-Install Raspbian packages from the Raspbian repositories into the sysroot of the docker image. Changes are committed back to the image.
+    ```sh
+        mkdir build && cd build
+    ```
 
-#### update-image
+    * execute `build.sh` script:
+    ```sh
+        <path to project sources root directory>/build.sh <path to project sources root directory>
+    ```
 
-`rpxc update-image`
 
-Pull the latest version of the docker image.
+Build own image
+===============
 
-If a new docker image is available, any extra packages installed with `install-debian` or `install-raspbian` will be lost.
-
-#### update-script
-
-`rpxc update-script`
-
-Update the installed `rpxc` script with the one bundled in the image.
-
-#### update
-
-`rpxc update`
-
-Update both the docker image and the `rpxc` script.
-
-## Configuration
-
-The following command-line options and environment variables are used. In all cases, the command-line option overrides the environment variable.
-
-### RPXC_CONFIG / --config &lt;path-to-config-file&gt;
-
-This file is sourced if it exists.
-
-Default: `~/.rpxc`
-
-### RPXC_IMAGE / --image &lt;docker-image-name&gt;
-
-The docker image to run.
-
-Default: monstrenyatko/rpi-cross-compiler
-
-### RPXC_ARGS / --args &lt;docker-run-args&gt;
-
-Extra arguments to pass to the `docker run` command.
-
-## Custom Images
-
-Using `rpxc install-debian` and `rpxc install-raspbian` are really only intended for getting a build environment together.
-Once you've figured out which Debian and Raspbian packages you need, it's better to create a custom downstream image
-that has all your tools and development packages built in.
-
-### Create a Dockerfile
+Own image based on available Main image
+---------------------------------------
 
 ```Dockerfile
-FROM monstrenyatko/rpi-cross-compiler
+    FROM monstrenyatko/rpi-cross-compiler:no_rpxc
 
-# Install some native build-time tools
-RUN install-debian scons
-
-# Install raspbian development libraries
-RUN install-raspbian libboost-dev-all
+    # your modifications
 ```
 
-### Name your image with an RPXC_IMAGE variable and build the image
+Main image
+----------
 
 ```sh
-export RPXC_IMAGE=my-custom-rpxc-image
-docker build -t $RPXC_IMAGE .
+    ./build.sh monstrenyatko/rpi-cross-compiler:no_rpxc
 ```
 
-### With RPXC_IMAGE set, rpxc will automatically use your new image.
+Stage One image
+---------------
+
+The `Main image` based on this image to speed-up image recreation.
+
+*Better to avoid rebuilding of this image and perform all required modifications into the `Main image`
+or make own image based on available `Main image`.*
+
+**Note:** Build takes plenty of time and sometimes fails/hangs on `x86` platform because of `QEMU` problems.
+In case of problems, try to build directly on `ARM` platform to avoid `QEMU` emulation.
 
 ```sh
-# These are typical cross-compilation flags to pass to configure.
-# Note the use of single quotes in the shell command-line. We want the
-# variables to be interpolated in the container, not in the host system.
-rpxc sh -c 'CFLAGS=--sysroot=$SYSROOT ./configure --host=$HOST'
-rpxc make
+    ./stage_1/build.sh monstrenyatko/rpi-cross-compiler:no_rpxc_stage_1
 ```
-
-Another way to achieve this is to create a shell script.
-
-```sh
-#!/bin/sh
-CFLAGS=--sysroot=$SYSROOT ./configure --host=$HOST
-make
-```
-
-And call it as `rpxc -- ./mymake.sh`
-
